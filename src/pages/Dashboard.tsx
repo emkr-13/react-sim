@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from 'react-query';
-import { Card, CardBody, CardHeader, CardTitle } from '../components/ui/Card';
-import apiService from '../services/api';
+import React, { useState, useEffect } from "react";
+import { useQuery } from "react-query";
+import { Card, CardBody, CardHeader, CardTitle } from "../components/ui/Card";
+import apiService from "../services/api";
 import {
   BarChart,
   Bar,
@@ -16,39 +16,32 @@ import {
   PieChart,
   Pie,
   Cell,
-} from 'recharts';
-import { Users, Package, Tag, Store } from 'lucide-react';
+} from "recharts";
+import { Users, Package, Tag, Store } from "lucide-react";
 
 const timeFilterOptions = [
-  { value: 'today', label: 'Today' },
-  { value: 'yesterday', label: 'Yesterday' },
-  { value: 'last_7_days', label: 'Last 7 Days' },
-  { value: 'last_30_days', label: 'Last 30 Days' },
-  { value: 'this_month', label: 'This Month' },
-  { value: 'last_month', label: 'Last Month' },
-  { value: 'this_year', label: 'This Year' },
+  { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "last_two_weeks", label: "Last 2 Weeks" },
+  { value: "last_30_days", label: "Last 30 Days" },
+  { value: "this_month", label: "This Month" },
+  { value: "last_month", label: "Last Month" },
+  { value: "this_year", label: "This Year" },
 ];
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
 const Dashboard: React.FC = () => {
-  const [timeFilter, setTimeFilter] = useState('last_7_days');
+  const [timeFilter, setTimeFilter] = useState("last_two_weeks");
 
   // Query for general summary
-  const {
-    data: generalSummary,
-    isLoading: isLoadingGeneral,
-    error: generalError,
-  } = useQuery('dashboardGeneral', () => apiService.getDashboardGeneralSummary());
+  const { data: generalSummary } = useQuery("dashboardGeneral", () =>
+    apiService.getDashboardGeneralSummary()
+  );
 
   // Query for specific summary with time filter
-  const {
-    data: specificSummary,
-    isLoading: isLoadingSpecific,
-    error: specificError,
-    refetch: refetchSpecific,
-  } = useQuery(
-    ['dashboardSpecific', timeFilter],
+  const { refetch: refetchSpecific } = useQuery(
+    ["dashboardSpecific", timeFilter],
     () => apiService.getDashboardSpecificSummary(timeFilter)
   );
 
@@ -59,20 +52,20 @@ const Dashboard: React.FC = () => {
 
   // Sample data for charts (in a real app, this would come from the API)
   const sampleChartData = [
-    { name: 'Jan', sales: 4000, purchases: 2400 },
-    { name: 'Feb', sales: 3000, purchases: 1398 },
-    { name: 'Mar', sales: 2000, purchases: 9800 },
-    { name: 'Apr', sales: 2780, purchases: 3908 },
-    { name: 'May', sales: 1890, purchases: 4800 },
-    { name: 'Jun', sales: 2390, purchases: 3800 },
+    { name: "Jan", sales: 4000, purchases: 2400 },
+    { name: "Feb", sales: 3000, purchases: 1398 },
+    { name: "Mar", sales: 2000, purchases: 9800 },
+    { name: "Apr", sales: 2780, purchases: 3908 },
+    { name: "May", sales: 1890, purchases: 4800 },
+    { name: "Jun", sales: 2390, purchases: 3800 },
   ];
 
   const categoryData = [
-    { name: 'Electronics', value: 400 },
-    { name: 'Furniture', value: 300 },
-    { name: 'Clothing', value: 300 },
-    { name: 'Books', value: 200 },
-    { name: 'Others', value: 100 },
+    { name: "Electronics", value: 400 },
+    { name: "Furniture", value: 300 },
+    { name: "Clothing", value: 300 },
+    { name: "Books", value: 200 },
+    { name: "Others", value: 100 },
   ];
 
   // Get summary stats from API response
@@ -114,7 +107,9 @@ const Dashboard: React.FC = () => {
               <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Users</p>
+              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                Users
+              </p>
               <p className="text-2xl font-bold text-blue-800 dark:text-blue-300">
                 {summaryData.totalUsers}
               </p>
@@ -128,7 +123,9 @@ const Dashboard: React.FC = () => {
               <Package className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-green-600 dark:text-green-400">Products</p>
+              <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                Products
+              </p>
               <p className="text-2xl font-bold text-green-800 dark:text-green-300">
                 {summaryData.totalProducts}
               </p>
@@ -142,7 +139,9 @@ const Dashboard: React.FC = () => {
               <Tag className="h-6 w-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Categories</p>
+              <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                Categories
+              </p>
               <p className="text-2xl font-bold text-purple-800 dark:text-purple-300">
                 {summaryData.totalCategories}
               </p>
@@ -156,7 +155,9 @@ const Dashboard: React.FC = () => {
               <Store className="h-6 w-6 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-amber-600 dark:text-amber-400">Stores</p>
+              <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                Stores
+              </p>
               <p className="text-2xl font-bold text-amber-800 dark:text-amber-300">
                 {summaryData.totalStores}
               </p>
@@ -208,10 +209,15 @@ const Dashboard: React.FC = () => {
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) =>
+                      `${name} ${(percent * 100).toFixed(0)}%`
+                    }
                   >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    {categoryData.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
                   <Tooltip />

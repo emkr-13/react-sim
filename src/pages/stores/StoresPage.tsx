@@ -66,6 +66,11 @@ const StoresPage: React.FC = () => {
     }
   };
 
+  // Check if stores data is in the expected format
+  const storesArray = Array.isArray(storesData?.data?.data)
+    ? storesData.data.data
+    : [];
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
@@ -113,7 +118,7 @@ const StoresPage: React.FC = () => {
             description="There was an error loading the stores data. Please try again."
             icon={<Building2 className="h-10 w-10" />}
           />
-        ) : storesData?.data.data.length === 0 ? (
+        ) : storesArray.length === 0 ? (
           <EmptyState
             title="No stores found"
             description="No stores match your search criteria. Try adjusting your search or add a new store."
@@ -143,7 +148,7 @@ const StoresPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {storesData?.data.data.map((store: Store) => (
+                  {storesArray.map((store: Store) => (
                     <tr
                       key={store.id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700"

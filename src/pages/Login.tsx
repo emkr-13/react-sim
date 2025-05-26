@@ -1,24 +1,22 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useAuth } from '../context/AuthContext';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import { Mail, Lock, AlertCircle } from 'lucide-react';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useAuth } from "../context/AuthContext";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import { Mail, Lock, AlertCircle } from "lucide-react";
 
 // Define form validation schema
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login: React.FC = () => {
-  const { login } = useAuth();
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, isLoading, loginError, clearLoginError } = useAuth();
 
   const {
     register,
@@ -30,14 +28,11 @@ const Login: React.FC = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      setIsLoading(true);
-      setError(null);
+      clearLoginError();
       await login(data.email, data.password);
     } catch (err) {
-      setError('Invalid email or password. Please try again.');
-      console.error('Login error:', err);
-    } finally {
-      setIsLoading(false);
+      console.error("Login error:", err);
+      // Error is now handled in the AuthContext
     }
   };
 
@@ -53,11 +48,14 @@ const Login: React.FC = () => {
           </p>
         </div>
 
-        {error && (
-          <div className="bg-danger-50 dark:bg-danger-900/30 border border-danger-200 dark:border-danger-800 text-danger-700 dark:text-danger-300 px-4 py-3 rounded relative" role="alert">
+        {loginError && (
+          <div
+            className="bg-danger-50 dark:bg-danger-900/30 border border-danger-200 dark:border-danger-800 text-danger-700 dark:text-danger-300 px-4 py-3 rounded relative"
+            role="alert"
+          >
             <div className="flex items-center">
               <AlertCircle className="h-5 w-5 mr-2" />
-              <span>{error}</span>
+              <span>{loginError}</span>
             </div>
           </div>
         )}
@@ -75,7 +73,7 @@ const Login: React.FC = () => {
                 fullWidth
                 leftIcon={<Mail className="h-5 w-5 text-gray-400" />}
                 error={errors.email?.message}
-                {...register('email')}
+                {...register("email")}
               />
             </div>
             <div>
@@ -89,18 +87,13 @@ const Login: React.FC = () => {
                 fullWidth
                 leftIcon={<Lock className="h-5 w-5 text-gray-400" />}
                 error={errors.password?.message}
-                {...register('password')}
+                {...register("password")}
               />
             </div>
           </div>
 
           <div>
-            <Button
-              type="submit"
-              fullWidth
-              size="lg"
-              isLoading={isLoading}
-            >
+            <Button type="submit" fullWidth size="lg" isLoading={isLoading}>
               Sign in
             </Button>
           </div>
