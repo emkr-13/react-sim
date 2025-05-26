@@ -1,53 +1,31 @@
 import React, { useState } from "react";
 import { useQuery } from "react-query";
-import {
-  Users,
-  Search,
-  SlidersHorizontal,
-  Plus,
-  Mail,
-  UserCircle,
-  Shield,
-} from "lucide-react";
+import { Users, Plus, Mail, UserCircle, Shield } from "lucide-react";
 import apiService from "../../services/api";
 import { User } from "../../types";
 import Button from "../../components/ui/Button";
-import Input from "../../components/ui/Input";
-import Select from "../../components/ui/Select";
 import EmptyState from "../../components/ui/EmptyState";
 import LoadingState from "../../components/ui/LoadingState";
-import Pagination from "../../components/ui/Pagination";
 import UserModal from "./UserModal";
 
 const UsersPage: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [roleFilter, setRoleFilter] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const pageSize = 10;
 
   const {
     data: userData,
     isLoading,
     isError,
     refetch,
-  } = useQuery(
-    ["users", currentPage, searchTerm, roleFilter],
-    () => apiService.getUserProfile(),
-    {
-      keepPreviousData: true,
+  } = useQuery(["users"], () => apiService.getUserProfile(), {
+    keepPreviousData: true,
+  });
+
+  const handleEditProfile = () => {
+    if (userData?.data) {
+      setSelectedUser(userData.data);
+      setIsModalOpen(true);
     }
-  );
-
-  const handleAddUser = () => {
-    setSelectedUser(null);
-    setIsModalOpen(true);
-  };
-
-  const handleEditUser = (user: User) => {
-    setSelectedUser(user);
-    setIsModalOpen(true);
   };
 
   const handleModalClose = (refetchData: boolean = false) => {
@@ -61,59 +39,26 @@ const UsersPage: React.FC = () => {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-          <Users className="mr-2" />
-          User Management
+          <UserCircle className="mr-2" />
+          User Profile
         </h1>
         <Button
           variant="primary"
           size="sm"
-          onClick={handleAddUser}
+          onClick={handleEditProfile}
           leftIcon={<Plus size={16} />}
         >
-          Add User
+          Edit Profile
         </Button>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-grow">
-              <Input
-                type="text"
-                placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                leftIcon={<Search className="h-5 w-5 text-gray-400" />}
-                fullWidth
-              />
-            </div>
-            <div className="w-full sm:w-48">
-              <Select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                fullWidth
-              >
-                <option value="">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="manager">Manager</option>
-                <option value="user">User</option>
-              </Select>
-            </div>
-            <Button
-              variant="outline"
-              leftIcon={<SlidersHorizontal size={16} />}
-            >
-              Filters
-            </Button>
-          </div>
-        </div>
-
         {isLoading ? (
           <LoadingState />
         ) : isError ? (
           <EmptyState
-            title="Error loading users"
-            description="There was an error loading the user data. Please try again."
+            title="Error loading profile"
+            description="There was an error loading your profile data. Please try again."
             icon={<Users className="h-10 w-10" />}
           />
         ) : (
@@ -134,16 +79,12 @@ const UsersPage: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Last Login
-                    </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {/* Show only the current user if that's all we have access to */}
                   <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                       <div className="flex items-center">
@@ -170,14 +111,11 @@ const UsersPage: React.FC = () => {
                         Active
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      Just now
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEditUser(userData?.data)}
+                        onClick={handleEditProfile}
                         className="text-primary-600 dark:text-primary-400"
                       >
                         Edit
@@ -188,10 +126,25 @@ const UsersPage: React.FC = () => {
               </table>
             </div>
 
-            <div className="px-6 py-3 border-t border-gray-200 dark:border-gray-700">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Note: This application currently shows only your user profile.
-                Full user management requires additional permissions.
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="text-sm text-gray-500 dark:text-gray-400 mb-2 font-medium">
+                Account Information
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="text-sm">
+                  <p className="text-gray-500 dark:text-gray-400">User ID:</p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {userData?.data.id}
+                  </p>
+                </div>
+                <div className="text-sm">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Account Created:
+                  </p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {new Date(userData?.data.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
             </div>
           </>
