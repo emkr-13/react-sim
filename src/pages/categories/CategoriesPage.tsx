@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
-import { useQuery } from 'react-query';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardBody } from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
-import { formatDate } from '../../utils/formatters';
-import apiService from '../../services/api';
-import CategoryModal from './CategoryModal';
-import DeleteConfirmModal from '../../components/ui/DeleteConfirmModal';
-import Spinner from '../../components/ui/Spinner';
+import React, { useState } from "react";
+import { useQuery } from "react-query";
+import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardBody,
+} from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
+import { formatDate } from "../../utils/formatters";
+import apiService from "../../services/api";
+import CategoryModal from "./CategoryModal";
+import DeleteConfirmModal from "../../components/ui/DeleteConfirmModal";
+import Spinner from "../../components/ui/Spinner";
 
 interface Category {
   id: string;
@@ -19,27 +24,35 @@ interface Category {
 }
 
 const CategoriesPage: React.FC = () => {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
 
   const {
     data: categoriesData,
     isLoading,
-    refetch
+    refetch,
+    error,
   } = useQuery(
-    ['categories', page, search],
-    () => apiService.getCategories({ 
-      page, 
-      limit: 10, 
-      search,
-      sortBy: 'createdAt',
-      sortOrder: 'desc'
-    }),
+    ["categories", page, search],
+    () =>
+      apiService.getCategories({
+        page,
+        limit: 10,
+        search,
+        sortBy: "createdAt",
+        sortOrder: "desc",
+      }),
     {
-      keepPreviousData: true
+      keepPreviousData: true,
+      retry: 1,
+      onError: (err) => {
+        console.error("Failed to fetch categories:", err);
+      },
     }
   );
 
@@ -61,7 +74,7 @@ const CategoriesPage: React.FC = () => {
         setIsDeleteModalOpen(false);
         setSelectedCategory(null);
       } catch (error) {
-        console.error('Failed to delete category:', error);
+        console.error("Failed to delete category:", error);
       }
     }
   };
@@ -84,6 +97,30 @@ const CategoriesPage: React.FC = () => {
       </div>
     );
   }
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className="text-red-500 mb-4">Failed to load categories</div>
+        <Button onClick={() => refetch()}>Retry</Button>
+      </div>
+    );
+  }
+
+  // Extract categories safely
+  const categories = categoriesData?.data?.data?.data || [];
+  const pagination = categoriesData?.data?.data?.pagination || {
+    total_data: 0,
+    total_page: 1,
+    total_display: 0,
+    first_page: true,
+    last_page: true,
+    prev: null,
+    current: 1,
+    next: null,
+    detail: [1],
+  };
 
   return (
     <div className="space-y-6">
@@ -131,37 +168,48 @@ const CategoriesPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {categoriesData?.data?.data.map((category: Category) => (
-                  <tr key={category.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      {category.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {category.description}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatDate(category.createdAt)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(category)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(category)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                {categories.length > 0 ? (
+                  categories.map((category: Category) => (
+                    <tr key={category.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                        {category.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {category.description}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {formatDate(category.createdAt)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(category)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(category)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+                    >
+                      No categories found
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -169,15 +217,12 @@ const CategoriesPage: React.FC = () => {
           {/* Pagination */}
           <div className="flex items-center justify-between mt-4">
             <div className="flex-1 flex justify-between sm:hidden">
-              <Button
-                onClick={() => setPage(page - 1)}
-                disabled={page === 1}
-              >
+              <Button onClick={() => setPage(page - 1)} disabled={page === 1}>
                 Previous
               </Button>
               <Button
                 onClick={() => setPage(page + 1)}
-                disabled={!categoriesData?.data?.pagination?.next}
+                disabled={!pagination?.next}
               >
                 Next
               </Button>
@@ -185,32 +230,35 @@ const CategoriesPage: React.FC = () => {
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-700 dark:text-gray-400">
-                  Showing{' '}
-                  <span className="font-medium">{((page - 1) * 10) + 1}</span>
-                  {' '}-{' '}
+                  Showing{" "}
                   <span className="font-medium">
-                    {Math.min(page * 10, categoriesData?.data?.pagination?.total_data || 0)}
-                  </span>
-                  {' '}of{' '}
-                  <span className="font-medium">{categoriesData?.data?.pagination?.total_data}</span>
-                  {' '}results
+                    {pagination.total_data > 0 ? (page - 1) * 10 + 1 : 0}
+                  </span>{" "}
+                  -{" "}
+                  <span className="font-medium">
+                    {Math.min(page * 10, pagination.total_data || 0)}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium">{pagination.total_data}</span>{" "}
+                  results
                 </p>
               </div>
               <div>
                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                  {categoriesData?.data?.pagination?.detail.map((pageNum: number) => (
-                    <button
-                      key={pageNum}
-                      onClick={() => setPage(pageNum)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                        page === pageNum
-                          ? 'z-10 bg-primary-50 border-primary-500 text-primary-600 dark:bg-primary-900 dark:text-primary-200'
-                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  ))}
+                  {pagination.detail &&
+                    pagination.detail.map((pageNum: number) => (
+                      <button
+                        key={pageNum}
+                        onClick={() => setPage(pageNum)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          page === pageNum
+                            ? "z-10 bg-primary-50 border-primary-500 text-primary-600 dark:bg-primary-900 dark:text-primary-200"
+                            : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
                 </nav>
               </div>
             </div>

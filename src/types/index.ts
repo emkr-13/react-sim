@@ -199,3 +199,64 @@ export interface Akun {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface StockByStore {
+  storeId: string;
+  storeName: string;
+  productId: string;
+  productName: string;
+  productSku: string;
+  productSatuan: string;
+  currentStock: number;
+}
+
+export interface CreateQuotationPayload {
+  customerId: number;
+  storeId: number;
+  quotationDate: string;
+  items: Array<{
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
+  notes?: string;
+  discountAmount?: number;
+}
+
+export interface CreatePurchasePayload {
+  supplierId: number;
+  storeId: number;
+  purchaseDate: string;
+  paymentDueDate: string;
+  items: Array<{
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
+  notes?: string;
+  taxAmount?: number;
+  discountAmount?: number;
+}
+
+export interface CreateStockMovementPayload {
+  productId: string;
+  storeId: string;
+  quantity: number;
+  movementType: "in" | "out";
+  note?: string;
+  referenceId?: string;
+  referenceType?: string;
+}
+
+export interface ReportGenerationParams {
+  filterType: string;
+  startDate?: string;
+  endDate?: string;
+  storeId?: string;
+  categoryId?: string;
+  productId?: string;
+  customerId?: string;
+  supplierId?: string;
+  movementType?: "in" | "out";
+  title?: string;
+}

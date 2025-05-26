@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL;
+// Use environment variable or fallback to localhost if not available
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3080";
 
 // Create axios instance
 const api = axios.create({
@@ -9,6 +10,8 @@ const api = axios.create({
     "Content-Type": "application/json",
     Accept: "application/json",
   },
+  // Add timeout to prevent long hanging requests
+  timeout: 10000,
 });
 
 // Request interceptor for adding the auth token
@@ -28,6 +31,16 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    // Handle network errors gracefully
+    if (error.code === "ERR_NETWORK") {
+      console.error("Network error - API server may be down or unreachable");
+      return Promise.reject({
+        ...error,
+        message:
+          "Server is unreachable. Please check your connection or try again later.",
+      });
+    }
 
     // If error is 401 (Unauthorized) and we haven't tried to refresh the token yet
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -83,6 +96,9 @@ const apiService = {
     api.post("/api/auth/login", { email, password }),
 
   logout: () => api.post("/api/auth/logout"),
+
+  refreshToken: (refreshToken: string) =>
+    api.post("/api/auth/refresh-token", { refreshToken }),
 
   // User endpoints
   getUserProfile: () => api.get("/api/user/profile"),
@@ -156,17 +172,21 @@ const apiService = {
   createProduct: (data: {
     name: string;
     categoryId: string;
-    price: number;
+    price_sell: string;
+    price_cost: string;
     satuan: string;
     description: string;
+    sku?: string;
   }) => api.post("/api/products/create", data),
   updateProduct: (data: {
     id: string;
     name: string;
     description: string;
     categoryId: string;
-    price: number;
+    price_sell: string;
+    price_cost: string;
     satuan: string;
+    sku?: string;
   }) => api.post("/api/products/update", data),
   deleteProduct: (id: string) => api.post("/api/products/delete", { id }),
 
@@ -175,12 +195,25 @@ const apiService = {
     page?: number;
     limit?: number;
     search?: string;
+    storeId?: string;
+    productId?: string;
     movementType?: "in" | "out";
+    startDate?: string;
+    endDate?: string;
     sortBy?: string;
     sortOrder?: "asc" | "desc";
   }) => api.get("/api/stock-movements/all", { params }),
   getStockMovementDetail: (id: number) =>
     api.post("/api/stock-movements/detail", { id }),
+  createStockMovement: (data: {
+    productId: string;
+    storeId: string;
+    quantity: number;
+    movementType: "in" | "out";
+    note?: string;
+    referenceId?: string;
+    referenceType?: string;
+  }) => api.post("/api/stock-movements/create", data),
 
   // Quotations endpoints
   getQuotations: (params: {
@@ -188,11 +221,25 @@ const apiService = {
     limit?: number;
     search?: string;
     status?: string;
+    startDate?: string;
+    endDate?: string;
     sortBy?: string;
     sortOrder?: "asc" | "desc";
   }) => api.get("/api/quotations/all", { params }),
   getQuotationDetail: (id: number) =>
     api.post("/api/quotations/detail", { id }),
+  createQuotation: (data: {
+    customerId: number;
+    storeId: number;
+    quotationDate: string;
+    items: Array<{
+      productId: string;
+      quantity: number;
+      unitPrice: number;
+    }>;
+    notes?: string;
+    discountAmount?: number;
+  }) => api.post("/api/quotations/create", data),
   updateQuotationStatus: (id: number, status: string) =>
     api.post("/api/quotations/update-status", { id, status }),
   exportQuotationToPdf: (id: number) =>
@@ -204,35 +251,71 @@ const apiService = {
     limit?: number;
     search?: string;
     status?: string;
+    paymentStatus?: string;
+    startDate?: string;
+    endDate?: string;
     sortBy?: string;
     sortOrder?: "asc" | "desc";
   }) => api.get("/api/purchases/all", { params }),
   getPurchaseDetail: (id: number) => api.post("/api/purchases/detail", { id }),
-  createPurchase: (data: any) => api.post("/api/purchases/create", data),
+  createPurchase: (data: {
+    supplierId: number;
+    storeId: number;
+    purchaseDate: string;
+    paymentDueDate: string;
+    items: Array<{
+      productId: string;
+      quantity: number;
+      unitPrice: number;
+    }>;
+    notes?: string;
+    taxAmount?: number;
+    discountAmount?: number;
+  }) => api.post("/api/purchases/create", data),
   updatePurchaseStatus: (id: number, status: string) =>
     api.post("/api/purchases/update-status", { id, status }),
+  updatePurchasePaymentStatus: (id: number, paymentStatus: string) =>
+    api.post("/api/purchases/update-payment-status", { id, paymentStatus }),
   exportPurchaseToPdf: (id: number) =>
     api.post("/api/purchases/export-pdf", { id }, { responseType: "blob" }),
 
   // Reports endpoints
-  generateCombinedReport: (data: {
+  generateInventoryReport: (data: {
     filterType: string;
+    storeId?: string;
+    categoryId?: string;
     startDate?: string;
     endDate?: string;
     title?: string;
-  }) => api.post("/api/reports/combined/pdf", data, { responseType: "blob" }),
+  }) => api.post("/api/reports/inventory/pdf", data, { responseType: "blob" }),
   generatePurchasesReport: (data: {
     filterType: string;
+    storeId?: string;
+    supplierId?: string;
     startDate?: string;
     endDate?: string;
     title?: string;
   }) => api.post("/api/reports/purchases/pdf", data, { responseType: "blob" }),
   generateQuotationsReport: (data: {
     filterType: string;
+    storeId?: string;
+    customerId?: string;
     startDate?: string;
     endDate?: string;
     title?: string;
   }) => api.post("/api/reports/quotations/pdf", data, { responseType: "blob" }),
+  generateStockMovementsReport: (data: {
+    filterType: string;
+    storeId?: string;
+    productId?: string;
+    movementType?: "in" | "out";
+    startDate?: string;
+    endDate?: string;
+    title?: string;
+  }) =>
+    api.post("/api/reports/stock-movements/pdf", data, {
+      responseType: "blob",
+    }),
 
   // Akun endpoints
   getAkuns: (params: {
